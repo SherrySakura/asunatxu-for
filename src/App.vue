@@ -1,28 +1,29 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div class="layout">
+    <Layout>
+      <app-header></app-header>
+      <router-view></router-view>
+      <app-footer></app-footer>
+    </Layout>
   </div>
+
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+  import router from "../js/router.js"
+  import Header from "../src/components/Header.vue"
+  import Footer from "../src/components/Footer.vue"
+  export default {
 
-export default {
-  name: 'App',
-  components: {
-    HelloWorld
+    name: 'App',
+    router,
+    components: {
+      "app-header": Header,
+      "app-footer": Footer
+    }
   }
-}
 </script>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+<style lang="less">
+  @import "../css/base.less";
 </style>

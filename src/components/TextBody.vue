@@ -41,7 +41,7 @@
                         <i-col class="normal-label" span="16">处理结果----<span style="color: #ff9900">{{ len }}</span>字符
                         </i-col>
                         <i-col span="4">
-                            <Button type="primary" @click="copyAll">复制结果</Button>
+                            <Button type="primary" id="copyed" @click="copyAll" :data-clipboard-text="res">复制结果</Button>
                         </i-col>
                         <i-col span="4">
                             <Button type="warning" @click="clearAll">清除</Button>
@@ -64,6 +64,9 @@
 </template>
 <script>
     import axios from "axios"
+    import cookie from '../../js/cookie'
+    import Clipboard from 'clipboard'
+    import message from "../../js/message"
     export default {
         data: function () {
             return {
@@ -78,10 +81,12 @@
                 var _this = this
                 if (this.type === "dropblank") {
                     var param = "message=" + this.ori
-                    console.log(param)
+                    if (cookie.getCookie("id") != null) {
+                        param = param + "&uuid=" + cookie.getCookie("id")
+                    }
                     //var data = this.httpUtil.post("/balank", params)  
                     //console.log(data)
-                    axios.post("http://localhost:8081/blank", param).then(function (response) {
+                    axios.post("http://www.asunapro.com:8081/api/blank", param).then(function (response) {
                         if (response.data.code != 200) {
                             console.log("失败了")
                         }
@@ -91,15 +96,56 @@
                         _this.res = response.data.data.result
                     })
                 }
+                if (this.type === "transE2C" || this.type === "transC2E") {
+                    if (cookie.getCookie("id") == null) {
+                        this.$Message["error"]({
+                            background: true,
+                            content: '要使用翻译功能，请先登录'
+                        })
+                        this.$router.push({
+                            path: "/login"
+                        })
+                    } else {
+                        var uuid = cookie.getCookie("id")
+                        var from = ""
+                        var to = ""
+                        switch (this.type) {
+                            case "transE2C":
+                                from = "EN"
+                                to = "zh-CHS"
+                                break
+                            case "transC2E":
+                                from = "zh-CHS"
+                                to = "EN"
+                                break
+                        }
+                        param = "message=" + this.ori + "&uuid=" + uuid + "&from=" + from + "&to=" + to
+                        axios.post("http://www.asunapro.com:8081/api/trans", param).then(function (response) {
+                            if (response.data.code != 200) {
+                                console.log("失败了")
+                            }
+                            _this.len = _this.ori.length
+                            _this.res = response.data.data.translate
+                        })
+                    }
+                }
             },
             copyAll() {
-
+                var clipboard = new Clipboard('#copyed') // 这里可以理解为选择器，选择上面的复制按钮
+                clipboard.on('success', () => {
+                    message.toast(this, "success", "复制成功")
+                    clipboard.destroy()
+                })
+                clipboard.on('error', () => {
+                    message.toast(this, "error", "本浏览器不支持复制")
+                    clipboard.destroy()
+                })
             },
             clearAll() {
                 this.len = 0
                 this.ori = ""
                 this.res = ""
-            }
+            },
         }
     }
 </script>

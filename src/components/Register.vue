@@ -72,7 +72,7 @@
                     <label>选择性别</label>
                 </i-col>
                 <i-col span="10">
-                    <RadioGroup v-model="gender">
+                    <RadioGroup v-model="genderText">
                         <Radio label="man">
                             <Icon type="ios-man"></Icon>
                             <span>绅士</span>
@@ -95,7 +95,7 @@
             <br>
             <Row :gutter="16">
                 <i-col span="16" class="right-label">
-                    <Button type="primary" @click="doLogin" style="width: 200px">注册</Button>
+                    <Button type="primary" @click="doRegiste" style="width: 200px">注册</Button>
                 </i-col>
             </Row>
         </Card>
@@ -104,20 +104,56 @@
 </template>
 <script>
     import axios from "axios";
+    //import cipher from "../../js/cipher"
+    import validate from "../../js/validate"
+    import message from "../../js/message"
+import cookie from '../../js/cookie';
     export default {
         data: function () {
             return {
                 account: "",
                 password: "",
                 remenberMe: false,
-                password2: ""
+                password2: "",
+                genderText: "",
+                mail: "",
+                gender: true
             }
         },
         methods: {
-            doLogin() {
-                var param = "name=" + this.account + "&password=" + this.password + "&remember=" + this.remenberMe
-                axios.post("http://localhost:8081/login", param).then(response => {
-                    console.log(response.data)
+            doRegiste() {
+                //const pk = cipher.getPublicKey()
+                if (this.genderText === "man"){
+                    this.gender = true
+                }else{
+                    this.gender = false
+                }
+                if (!validate.passwordValidate(this.password, this.password2)){
+                    message.toast(this, "error", "前后两次密码不一致")
+                    return
+                }
+                if (!validate.mailvalidate(this.mail)){
+                    message.toast(this, "error", "请输入正确的邮箱")
+                    return
+                }
+                //var passwordEncryted = cipher.encrypt(this.password, pk)
+                //passwordEncryted = decodeURIComponent(passwordEncryted)
+                const param = "account=" + this.account + "&password=" + this.password + "&gender=" + this.gender + "&mail=" + this.mail
+                axios.post("http://www.asunapro.com:8081/api/register", param).then(response => {
+                    message.toast(this, "success", "注册成功，正在跳转")
+                    if (cookie.getCookie("account") != null){
+                        cookie.deleteCookie("account")
+                        cookie.deleteCookie("id")
+                    }
+                    if (this.remenberMe == true){
+                        cookie.setCookie("account", response.data.data.account, 1)
+                        cookie.setCookie("id", response.data.data.id, 1)
+                    }else{
+                        cookie.setCookie("account", response.data.data.account, 1, "hour")
+                        cookie.setCookie("id", response.data.data.id, 1, "hour")
+                    }
+                    localStorage.setItem("account", JSON.stringify(response.data.data))
+                    this.$router.push({path: "/"})
                 })
             }
         }
